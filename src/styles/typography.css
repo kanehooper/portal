@@ -1,0 +1,29 @@
+@layer components {
+  .type-display {
+    @apply font-heading text-display font-semibold tracking-display;
+  }
+
+  .type-page-title {
+    @apply font-heading text-page-title font-semibold tracking-page-title;
+  }
+
+  .type-section-title {
+    @apply font-heading text-section-title font-semibold tracking-section-title;
+  }
+
+  .type-card-title {
+    @apply font-heading text-card-title font-semibold tracking-card-title;
+  }
+
+  .type-body {
+    @apply font-sans text-body font-normal;
+  }
+
+  .type-body-sm {
+    @apply font-sans text-body-sm font-normal;
+  }
+
+  .type-caption {
+    @apply font-sans text-caption font-normal;
+  }
+}
