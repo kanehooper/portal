@@ -1,36 +1,7 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Operations Portal
 
-## Getting Started
+Run `pnpm db:migrate`, then provision the single owner with `pnpm owner -- --email=owner@example.com`. Set the production environment from the external `operations.env` file before deploying.
 
-First, run the development server:
+Production uses two launchd services under `deploy/launchd`: the web server on loopback port 3015 and the independent monitoring worker. The Cloudflare tunnel ingress for `portal.thehoopers.au` must point to `http://127.0.0.1:3015` only after the web service and login have been verified.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`pnpm backup` creates a consistent SQLite backup and keeps seven daily snapshots. To restore: stop both services, restore a compatible snapshot, revoke sessions, cancel queued commands, start the worker in monitor-only mode and verify current observations before re-enabling recovery.

@@ -1,0 +1,25 @@
+export type HexColour = `#${string}`
+export type Length = `${number}rem` | `${number}px` | `${number}em`
+export type FontFamily = "sans" | "heading" | "mono"
+export interface TypeStyle { readonly family: FontFamily; readonly size: Length; readonly lineHeight: Length; readonly weight: 400 | 500 | 600; readonly tracking: Length; readonly mobileSize?: Length; readonly mobileLineHeight?: Length; readonly tabular?: boolean }
+
+const palette = {
+  white: "#FFFFFF", slate50: "#F8FAFC", slate100: "#F1F5F9", slate200: "#E2E8F0", slate300: "#CBD5E1", slate500: "#64748B", slate600: "#475569", slate700: "#334155", slate900: "#0F172A",
+  blue50: "#EFF6FF", blue200: "#BFDBFE", blue600: "#2563EB", blue700: "#1D4ED8", emerald50: "#ECFDF5", emerald200: "#A7F3D0", emerald700: "#047857", amber50: "#FFFBEB", amber200: "#FDE68A", amber800: "#92400E", red50: "#FEF2F2", red200: "#FECACA", red600: "#DC2626", red700: "#B91C1C",
+} as const satisfies Record<string, HexColour>
+
+const colours = {
+  background: palette.slate50, foreground: palette.slate900, card: palette.white, "card-foreground": palette.slate900, popover: palette.white, "popover-foreground": palette.slate900,
+  primary: palette.blue600, "primary-foreground": palette.white, "primary-hover": palette.blue700, secondary: palette.slate100, "secondary-foreground": palette.slate700, muted: palette.slate100, "muted-foreground": palette.slate600, accent: palette.blue50, "accent-foreground": palette.blue700, destructive: palette.red600, "destructive-foreground": palette.white, border: palette.slate200, input: palette.slate500, ring: palette.blue600,
+  sidebar: palette.slate50, "sidebar-foreground": palette.slate700, "sidebar-primary": palette.blue600, "sidebar-primary-foreground": palette.white, "sidebar-accent": palette.blue50, "sidebar-accent-foreground": palette.blue700, "sidebar-border": palette.slate200, "sidebar-ring": palette.blue600,
+  success: palette.emerald50, "success-foreground": palette.emerald700, "success-border": palette.emerald200, warning: palette.amber50, "warning-foreground": palette.amber800, "warning-border": palette.amber200, danger: palette.red50, "danger-foreground": palette.red700, "danger-border": palette.red200, info: palette.blue50, "info-foreground": palette.blue700, "info-border": palette.blue200, neutral: palette.slate100, "neutral-foreground": palette.slate600, "neutral-border": palette.slate300,
+} as const satisfies Record<string, HexColour>
+
+const typography = {
+  pageTitle: { family: "heading", size: "2rem", lineHeight: "2.5rem", weight: 600, tracking: "-0.025em", mobileSize: "1.75rem", mobileLineHeight: "2.25rem" },
+  panelTitle: { family: "heading", size: "1.5rem", lineHeight: "2rem", weight: 600, tracking: "-0.02em" }, cardTitle: { family: "heading", size: "1.125rem", lineHeight: "1.625rem", weight: 600, tracking: "-0.015em" }, sectionTitle: { family: "heading", size: "1rem", lineHeight: "1.5rem", weight: 600, tracking: "-0.01em" }, body: { family: "sans", size: "0.875rem", lineHeight: "1.375rem", weight: 400, tracking: "0em" }, label: { family: "sans", size: "0.875rem", lineHeight: "1.25rem", weight: 500, tracking: "0em" }, caption: { family: "sans", size: "0.75rem", lineHeight: "1.125rem", weight: 400, tracking: "0em" }, data: { family: "mono", size: "0.8125rem", lineHeight: "1.25rem", weight: 500, tracking: "0em", tabular: true }, metric: { family: "sans", size: "1.5rem", lineHeight: "2rem", weight: 600, tracking: "-0.02em", tabular: true }, input: { family: "sans", size: "1rem", lineHeight: "1.5rem", weight: 400, tracking: "0em" },
+} as const satisfies Record<string, TypeStyle>
+
+export const tokens = { name: "Operations Blue", mode: "light", colours, fonts: { sans: "var(--font-geist-sans, ui-sans-serif), system-ui, sans-serif", heading: "var(--font-geist-sans, ui-sans-serif), system-ui, sans-serif", mono: "var(--font-geist-mono, ui-monospace), SFMono-Regular, monospace" }, typography, spacing: { micro: "0.25rem", inline: "0.5rem", stack: "0.75rem", group: "1rem", section: "1.5rem", large: "2rem" }, layout: { sidebarWidth: "14rem", sidebarMobileWidth: "18rem", detailsWidth: "28rem", appCardMinWidth: "20rem", panelPadding: "1.5rem", styleGuideTokenTableMaxHeight: "36rem", pagePadding: { mobile: "1rem", tablet: "1.5rem", desktop: "2rem" }, cardPadding: { mobile: "1rem", desktop: "1.5rem" }, gridGap: { mobile: "1rem", desktop: "1.5rem" } }, radius: { sm: "0.375rem", md: "0.5rem", lg: "0.75rem", xl: "1rem", "2xl": "1.5rem", full: "9999px" }, sizing: { controlHeight: "2.75rem", icon: "1rem", navigationIcon: "1.25rem", appIcon: "1.5rem", appIconTile: "3rem", statusDot: "0.5rem", borderWidth: "1px", focusWidth: "2px", focusOffset: "2px" }, shadows: { card: "none", overlay: "0 8px 24px -8px rgb(15 23 42 / 0.16)" }, motion: { fast: "150ms", panel: "200ms", easing: "cubic-bezier(0.2, 0, 0, 1)", reduced: "0ms" }, breakpoints: { tablet: "48rem", desktop: "64rem", wide: "90rem" } } as const
+export type ColourToken = keyof typeof tokens.colours
+export type TypographyRole = keyof typeof tokens.typography

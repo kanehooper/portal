@@ -13,16 +13,19 @@
 @layer components {
   .page-container {
     width: 100%;
-    max-width: var(--page-max-width);
+    min-width: 0;
     margin-inline: auto;
-    padding-inline: var(--page-padding-x);
-    padding-block: var(--page-padding-y);
+    padding: var(--page-padding);
   }
 
   .page-stack {
     display: flex;
     flex-direction: column;
-    gap: var(--page-header-content-gap);
+    gap: var(--space-section);
+  }
+
+  .page-container-fluid {
+    max-width: none;
   }
 
   .page-header {
@@ -34,7 +37,7 @@
   .page-header-copy {
     display: flex;
     flex-direction: column;
-    gap: var(--page-header-copy-gap);
+    gap: var(--space-micro);
   }
 
   .page-header-actions {
@@ -58,6 +61,6 @@
   .page-content {
     display: flex;
     flex-direction: column;
-    gap: var(--page-section-gap);
+    gap: var(--space-section);
   }
 }

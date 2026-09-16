@@ -13,7 +13,7 @@ export function PageHeader({ title, description, actions }: PageHeaderProps) {
         <h1 className='type-page-title'>{title}</h1>
 
         {description ? (
-          <p className='type-body-sm text-muted-foreground'>{description}</p>
+          <p className='type-body text-muted-foreground'>{description}</p>
         ) : null}
       </div>
 

@@ -1,0 +1,4 @@
+import { getApplication, updateApplication } from "@/server/apps/service"
+import { privateJson, requireApiOwner } from "@/server/http"
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) { const owner = await requireApiOwner(request); if (owner.error) return owner.error; const app = await getApplication((await params).id); return app ? privateJson(app) : privateJson({ error: "Not found" }, { status: 404 }) }
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) { const owner = await requireApiOwner(request, true); if (owner.error) return owner.error; try { const app = await updateApplication((await params).id, await request.json()); return app ? privateJson(app) : privateJson({ error: "Not found" }, { status: 404 }) } catch { return privateJson({ error: "Application configuration is invalid." }, { status: 400 }) } }

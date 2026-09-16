@@ -2,7 +2,7 @@
 
 ## Application Stack
 
-This repository is a reusable Next.js application starter.
+This Operations Portal was built from the reusable Next.js starter.
 
 Use the existing stack and conventions. Do not introduce alternative frameworks or overlapping libraries without explicit instruction.
 
@@ -20,13 +20,45 @@ Treat these files as authoritative:
 
 - `package.json` — installed packages and versions
 - `components.json` — shadcn configuration and component aliases
-- `src/app/globals.css` — design tokens, Tailwind theme mappings, and global styles
+- `src/design-system/tokens.ts` — canonical visual values
+- `src/design-system/theme.generated.css` — generated CSS variables and typography utilities
+- `src/app/globals.css` — stylesheet import entry point
 - `src/app/layout.tsx` — application root layout and global providers
 - `AGENTS.md` — implementation rules and architectural constraints
 
 Do not rely on training-data assumptions about Next.js APIs. Follow the repository's Next.js agent rules and inspect the installed Next.js documentation when required.
 
 <!-- END:application-stack -->
+
+<!-- BEGIN:operations-portal-stack -->
+
+## Operations Portal Stack
+
+This repository implements a single-owner operations portal. Keep these runtime boundaries intact.
+
+- **Web:** Next.js 16.3.4 App Router and React 19.2.8. Route pages are Server Components by default; client components are limited to browser interaction and refresh behaviour.
+- **Authentication:** Better Auth email/password with a single locally provisioned owner, database sessions, disabled public signup, host-only secure cookies and persistent rate limits. Use `src/server/auth.ts`; do not create another auth system or expose owner provisioning in the browser.
+- **Persistence:** SQLite through `better-sqlite3`, Drizzle ORM and committed SQL migrations in `drizzle/`. Use `src/server/db/`; do not access SQLite directly from components, route handlers outside the server layer, or client code.
+- **Validation:** Zod validates all browser-to-server input. Every protected route handler uses `requireApiOwner`; every mutation also verifies the trusted portal origin.
+- **Worker:** `src/worker/main.ts` is an independent Node process. It owns PM2 observation, HTTP probes, command execution, recovery and connector operations. The Next.js process must only read stored data and enqueue allowlisted commands.
+- **Process manager:** PM2 is an external monitored dependency. Access it only through `src/worker/pm2-adapter.ts`. Never issue broad commands such as `restart all`, `delete all`, `killDaemon`, or shell commands assembled from browser input.
+- **Monitoring:** Scheduled samples run every 60 seconds. Health probes have a five-second deadline, no redirects, a 16 KiB body limit, TLS validation and validated destinations. Monitoring constants are operational configuration, not design tokens.
+- **Status:** Use `deriveAppStatus()` and the shared seven statuses from `src/domain/operations.ts` and `src/design-system/status-styles.ts`. Do not derive badges independently in pages or components.
+- **Commands:** Application controls are durable, target-specific commands in SQLite. They use idempotency keys, expiry, revalidation and worker-side verification. A queued command is not a successful operation.
+- **Presentation:** `AppCard`, `HealthRow` and `StatusBadge` are shared production compositions. `/style-guide` may use fixtures only; demonstration handlers must never call operational APIs.
+- **Deployment:** Production binds the web service to `127.0.0.1:3015`; Cloudflare maps only `portal.thehoopers.au` to that origin. Web and worker run as separate `launchd` services using the templates in `deploy/launchd/`, outside the PM2 instance they monitor.
+- **Runtime state:** Production SQLite, backups and the environment file live under `/Users/kanehooper/Library/Application Support/OperationsPortal`, never in the repository, `public/`, or build output. Secrets remain in the external environment file and must not appear in logs, API responses or client bundles.
+
+### Required workflow
+
+1. Read the relevant installed Next.js documentation before changing App Router or Route Handler behaviour.
+2. Run `pnpm theme:generate` after modifying `src/design-system/tokens.ts`; generated CSS is committed output.
+3. Create schema changes through Drizzle and commit the generated migration. Apply migrations with `pnpm db:migrate`; never edit a production database manually.
+4. Use `pnpm owner -- --email=<owner-email>` only from the local terminal to provision or reset the owner account. It revokes current sessions.
+5. Verify `pnpm check:ui` before any build that regenerates theme output, then `pnpm build`. UI work also requires the visual review below. Report unavailable checks explicitly.
+6. Treat production controls, Cloudflare ingress changes, real tunnel restarts, and Mac reboots as operational actions. Verify the exact target and preserve a rollback path before performing them.
+
+<!-- END:operations-portal-stack -->
 
 <!-- BEGIN:nextjs-agent-rules -->
 
@@ -42,10 +74,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Design System
 
+TypeScript tokens in `src/design-system/tokens.ts` own Operations Blue visual values. Run `pnpm theme:generate` after changing them; `src/design-system/theme.generated.css` is generated output and must not be edited manually. Application UI uses semantic tokens and complete `type-*` roles rather than literal colours or local font definitions.
+
 Design-system CSS is organised by concern under `src/styles/`.
 
-- `tokens.css` contains global design tokens and theme values.
-- `typography.css` contains semantic typography styles.
+- `tokens.css` imports generated tokens and contains Tailwind semantic aliases.
+- `typography.css` contains base typography rules; complete semantic roles are generated.
 - `layout.css` contains shared structural layout styles.
 
 Do not add unrelated design-system rules directly to `src/app/globals.css`. Treat `globals.css` primarily as the global stylesheet entry point.
@@ -56,7 +90,7 @@ Do not add unrelated design-system rules directly to `src/app/globals.css`. Trea
 
 3. [Critical] Do not hard-code design colours inside application components using hex, RGB, HSL, OKLCH, inline styles, or arbitrary Tailwind values such as `bg-[#123456]`. Do not use palette colours such as `bg-blue-600` for standard application UI when a semantic token exists.
 
-4. Treat `src/app/globals.css` as the source of truth for global design tokens and theme mappings. Do not redefine global colour, font-family, radius, or other design-system tokens inside individual components.
+4. Treat `src/design-system/tokens.ts` as the source of truth for visual values. Do not redefine global colour, font-family, radius, or other design-system tokens inside individual components. Never hand-edit generated CSS.
 
 5. Load application fonts through Next.js `next/font`. Components must consume fonts through design-system utilities rather than referencing Next.js font variables directly.
 
@@ -73,13 +107,16 @@ Do not add unrelated design-system rules directly to `src/app/globals.css`. Trea
 ### Typography
 
 11. Use the semantic typography styles for standard application text:
-    - `type-display`
     - `type-page-title`
+    - `type-panel-title`
     - `type-section-title`
     - `type-card-title`
     - `type-body`
-    - `type-body-sm`
+    - `type-label`
     - `type-caption`
+    - `type-data`
+    - `type-metric`
+    - `type-input`
 
 12. Semantic typography styles define font family, size, line height, weight, and letter spacing. Do not recreate these styles inside application components using combinations such as `text-*`, `font-*`, `leading-*`, or `tracking-*`.
 
@@ -95,7 +132,7 @@ Do not add unrelated design-system rules directly to `src/app/globals.css`. Trea
 
 17. Choose typography roles by semantic purpose, not by preferred visual size.
 
-18. Use `type-display` only for rare, exceptionally prominent text such as hero, onboarding, or major empty-state messaging. Do not use it for normal application page titles.
+18. Do not invent typography class names. Add a genuinely missing role to the canonical tokens and regenerate utilities first.
 
 19. Use `type-page-title` for the primary title of the current page. A page should normally have one primary page title.
 
@@ -105,7 +142,7 @@ Do not add unrelated design-system rules directly to `src/app/globals.css`. Trea
 
 22. Use `type-body` for normal readable prose and primary textual content.
 
-23. Use `type-body-sm` for supporting descriptions, helper content, and compact application text.
+23. Use `type-body` for supporting sentences; use `type-label` for form labels and `type-input` for input text.
 
 24. Use `type-caption` only for terse metadata and secondary information such as timestamps, counts, versions, or short status details. Do not use caption typography for normal sentences or form labels.
 
@@ -140,3 +177,19 @@ Do not add unrelated design-system rules directly to `src/app/globals.css`. Trea
 38. If the standard page spacing or header behaviour does not fit a genuine recurring use case, extend the layout component API rather than applying local spacing overrides.
 
 <!-- END:design-system-rules -->
+
+## Spacing and rendered-layout acceptance
+
+The previous spacing defect came from undefined CSS variables: the browser silently discarded padding and gap declarations even though lint/build passed. A token reference in code is not evidence that spacing renders correctly.
+
+- Before implementation, name the owner of each space: PageContainer owns outer gutters; page stacks own section separation; grid parents own sibling gaps; cards/panels own internal padding; controls own their target size. Apply each once.
+- Current contract: page gutters 16px below 768px, 24px from 768px, 32px from 1024px; section gap 24px; card padding 16px mobile/24px desktop; card group gap 16px; control targets 44px. Values come from canonical tokens, not local literals.
+- Use parent `gap` for siblings. Do not patch missing tokens with scattered margins, spacer elements, arbitrary fallbacks or `!important`.
+- New `var(--name)` references must have a generated/global definition. `pnpm css:check` checks authored CSS/TSX references and typography names; it runs with lint. Externally supplied variables must have a narrow documented provider entry in the checker, never a wildcard exemption.
+- Static token coverage cannot prove cascade, import order, variable scope or computed layout. Run `pnpm test:layout` and inspect rendered output after UI/CSS changes.
+- Test populated, empty and long-content states, all status labels, and missing values. Do not approve spacing from an empty dashboard alone. Reuse actual shared components in fixtures; never connect fixture interactions to production controls.
+- Review 320, 390, 768, 1024, 1440 and 1920 CSS-pixel widths; verify gutters, header/content separation, card insets, text wrapping, control spacing and horizontal overflow. Check keyboard focus, reduced motion and 200% browser zoom/reflow.
+- Save/review desktop and mobile screenshots. Update baselines only after inspecting the new image and explaining an intentional visual change. Never regenerate snapshots just to make a failure green.
+- Completion notes must name tested widths/states, checks run, screenshot paths and limitations. A successful build alone is not visual acceptance.
+
+See `docs/layout-quality.md` for commands, fixture isolation, baseline review and the reusable implementation prompt.
